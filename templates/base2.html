@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset='utf-8'>
+    <meta http-equiv='X-UA-Compatible' content='IE=edge'>
+    <meta name='viewport' content='width=device-width, initial-scale=1'>
+    <meta name="google-site-verification" content="S_SKdBmEVbextOeSzuVXg6qkIFhsTZv-lV39eBWbVq0" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="icon" href="{{ url_for('static', filename='images/favicon.ico') }}" type="image/x-icon">
+    {% block styles %}{% endblock %}
+    <title>{{title}}</title>
+
+</head>
+<body>
+    <div class="topheader">
+        <div class="container">
+            <header class="header">
+                <div class="inform">
+                    <div class="logo">
+                        <a href="/">
+                            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo">
+                            <p>Борщевик</p>
+                        </a>
+                    </div>
+                    {% if not current_user.is_authenticated %}
+                    <div class="account">
+                        <a href="/">
+                            <img src="{{ url_for('static', filename='images/account.png') }}" alt="Account">
+                        </a>
+                    </div>
+                    {%endif%}
+                </div>
+            </header>
+        </div>
+    </div>
+    <div class="main_content" style="justify-content: center;">
+        <section class="content">
+            <div class="container">
+                {% block content %}{% endblock %}
+            </div>
+        </section>
+    </div>
+{% block scripts %}{% endblock %}
+</body>
+</html>

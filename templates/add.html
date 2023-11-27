@@ -1,0 +1,125 @@
+{% extends "base2.html" %}
+{% block scripts %}
+<script src="https://api-maps.yandex.ru/2.1/?apikey={{api}}&lang=ru_RU"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script>
+        var map, center, zoom;
+        var objectManager;
+        var myPolygon;
+        var coord = [];
+        ymaps.ready(function(){
+            map = new ymaps.Map('map', {
+                center: [54.782635, 32.045287],
+                zoom: 7,
+                controls: [
+                'zoomControl', // Ползунок масштаба
+                'typeSelector', // Переключатель слоев карты
+                'searchControl', 
+                'geolocationControl'
+                ]
+            });
+            let myPolygons;
+            {% for item in coords %}
+                {% if item[1] == 1 %}
+                    myPolygons = new ymaps.GeoObject({
+                        geometry: {
+                            type: "Polygon",
+                            coordinates: [{{item[0][0]}}, {{item[0][1]}}]
+                        }
+                    }, {
+                            fillColor: '#FF0000', //цвет
+                            opacity: 0.5, //прозрачность
+                            stroke: false //обводка(нету)
+                        });
+                    map.geoObjects.add(myPolygons);
+                {% endif %}
+            {% endfor %}
+            document.getElementById("btnStartDraw").addEventListener('click', createPolygon, false);
+
+            function createPolygon() {
+                this.disabled = 'disabled';
+                 myPolygon = new ymaps.Polygon([], {}, {
+                    editorDrawingCursor: "crosshair",
+                    fillColor: '#FF0000',
+                    opacity: 0.5,
+                    strokeColor: '#00FF00',
+                    strokeWidth: 3
+                });
+                map.geoObjects.add(myPolygon);
+
+                var stateMonitor = new ymaps.Monitor(myPolygon.editor.state);
+                stateMonitor.add("drawing", function (newValue) {
+                    myPolygon.options.set("strokeColor", newValue ? '#184fe6' : '#184fe6');
+                });
+
+                myPolygon.editor.startDrawing();
+                myPolygon.editor.events.add("drawingstop", function (e) {
+                    getCoords(myPolygon.geometry.getCoordinates());
+                });
+            };
+            function stopPolygon() {
+                    myPolygon.editor.stopDrawing();
+            };
+
+            function getCoords(coordsArr) {
+                coord.push(coordsArr);
+                var stateMonitor = new ymaps.Monitor(myPolygon.editor.state);
+                if (!stateMonitor.drawing) createPolygon();
+            };
+
+            function removePolygon() {
+                map.geoObjects.remove(myPolygon);
+            };
+        });
+
+        function findMarks(){
+            let placemarks = "";
+            console.log(coord)
+            coord.forEach(function(pol){
+                pol.forEach(function(obj) {
+                    let str = "";
+                    obj.forEach(function(item){
+                        str += String(item[0])+","+String(item[1])+";";
+                    });
+                    placemarks += str.slice(0, -1) + "/";
+                });
+                placemarks = placemarks.slice(0, -1) + "|";
+            });
+            console.log(placemarks);
+            return placemarks;
+        };
+        document.getElementById('bt').onclick = function(){
+            document.getElementById('coord').value = findMarks();
+        };
+      </script>
+{% endblock %}
+{% block content %}
+
+<form action="" method="post" enctype="multipart/form-data">
+    {{ form.hidden_tag() }}
+    <div class="cont">
+        <div id="map"></div>
+        <div id="add">
+            <p></p>
+            <h5>Добавлять можно сразу несколько точек!</h5>
+            <h6>Чтобы добавить внутренний контур нажмите на последнюю точку -> "Добавить внутренний контур"</h6>
+            <h6>Чтобы закончить рисовать нажмите на последнюю точку -> "Завершить"</h6>
+            <input type="button" id="btnStartDraw" value="Начать рисовать" style="margin-bottom: 5px;">
+<!--            <p>-->
+<!--                {{ form.file.label(class="form-label") }}<br>-->
+<!--                {{ form.file(class="form-control-control") }}<br>-->
+<!--            </p>-->
+            <p>{{ form.submit(type="submit",id="bt", class="btn btn-primary") }}</p>
+             {{message}}
+            <p style="height:0; width:0;">
+                {{ form.coords(type="coords",id="coord", style="visibility: hidden;height:0; width:0;") }}
+                {% for error in form.coords.errors %}
+                        <div class="alert alert-danger" role="alert">
+                            {{ error }}
+                        </div>
+                {% endfor %}
+            </p>
+        </div>
+    </div>
+</form>
+{% endblock %}

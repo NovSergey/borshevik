@@ -1,0 +1,67 @@
+<html>
+<head>
+    <meta charset='utf-8'>
+    <meta http-equiv='X-UA-Compatible' content='IE=edge'>
+    <meta name='viewport' content='width=device-width, initial-scale=1'>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/map.css') }}">
+    <title>{{title}}</title>
+    <script src="https://api-maps.yandex.ru/2.1/?apikey={{api}}&lang=ru_RU"></script>
+    <script>
+        ymaps.ready(function () {
+            const map = new ymaps.Map('map', {
+                center: [54.782635, 32.045287],
+                zoom: 10,
+                controls: [
+                'zoomControl', // Ползунок масштаба
+                'typeSelector' // Переключатель слоев карты
+                ]
+            });
+            let myPolygon;
+            {% for item in coords %}
+                {% if item[1] == 1 %}
+                    myPolygon = new ymaps.GeoObject({
+                        geometry: {
+                            type: "Polygon",
+                            coordinates: [{{item[0][0]}}, {{item[0][1]}}]
+                        }
+                    }, {
+                            fillColor: '#FF0000', //цвет
+                            opacity: 0.5, //прозрачность
+                            stroke: false //обводка(нету)
+                        });
+                    map.geoObjects.add(myPolygon);
+                    console.log({{item}});
+                {% endif %}
+            {% endfor %}
+        });
+      </script>
+</head>
+<body>
+<div class="topheader">
+        <div class="container">
+            <header class="header">
+                <div class="inform">
+                    <div class="logo">
+                        <a href="/">
+                            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo">
+                        </a>
+                    </div>
+                    <div class="add">
+                        {% if current_user.is_authenticated %}
+                        <a href="/add_polygon">Добавить Точку</a>
+                        {% elif not current_user.is_authenticated %}
+                        <a href="/login">Добавить точку</a>
+                        {% endif %}
+                    </div>
+                </div>
+            </header>
+        </div>
+    </div>
+    <div class="main_content">
+        <section class="content">
+            <div id="map" style="width: 100vw; height: 100vh; margin: 0;"></div>
+        </section>
+    </div>
+</body>
+</html>

@@ -1,0 +1,83 @@
+
+{% extends "base2.html" %}
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+{% endblock %}
+{% block scripts %}
+<script src="https://api-maps.yandex.ru/2.1/?apikey={{api}}&lang=ru_RU"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script>
+        var map;
+        ymaps.ready(function () {
+            map = new ymaps.Map('map', {
+                center: [55.756377,37.618008],
+                zoom: 5,
+                controls: [
+                'zoomControl', // Ползунок масштаба
+                'typeSelector' // Переключатель слоев карты
+                ]
+            });
+        });
+        function show(item){
+            map.geoObjects.removeAll();
+            let myPolygons;
+            if (item[1] == 0){
+                var coords = [item[0][0]];
+                if(item[0].length == 2){
+                  coords.push(item[0][1]);
+                };
+                map.setCenter(item[0][0][0]);
+                myPolygons = new ymaps.GeoObject({
+                    geometry: {
+                        type: "Polygon",
+                        coordinates: coords
+                    }
+                }, {
+                        fillColor: '#FF0000', //цвет
+                        opacity: 0.5, //прозрачность
+                        stroke: false //обводка(нету)
+                    });
+                map.geoObjects.add(myPolygons);
+                let min = coords[0][0][0];
+                let max = coords[0][0][0];
+                for(var i in coords[0]){
+                    if(coords[0][i][0] < min){
+                        min = coords[0][i][0];
+                    }
+                    else if(coords[0][i][0] > max){
+                        max = coords[0][i][0];
+                    }
+                };
+                console.log(min, max)
+                let zoom = 1/(max-min);
+                map.setZoom(zoom);
+                console.log(zoom);
+            };
+        };
+</script>
+{% endblock %}
+{% block content %}
+<h1>Новые точки</h1>
+<div id="map"></div>
+
+{% for item in coords%}
+  {% if item[1] == 0 %}
+    <div class="col-md6 border rounded">
+      <div style="display: inline-table;">
+<!--        <a href="#{{ url_for('static', filename=item[3]) }}">-->
+<!--          <img src="{{ url_for('static', filename=item[3]) }}" style="max-width: 300px; max-height: 200px">-->
+<!--        </a>-->
+        <a id="{{ url_for('static', filename=item[3]) }}" href="#" class="full" style="background-image:url({{ url_for('static', filename=item[3]) }})"></a>
+        <input id="bt" type="button" value="Посмотреть" onclick="show({{item}})">
+        <a href="/pol_add/{{ item[2] }}" class="btn btn-warning">
+          Добавить
+        </a>
+        <a href="/pol_remove/{{ item[2] }}" class="btn btn-danger">
+          Удалить
+        </a>
+      </div>
+    </div>
+
+  {% endif %}
+{% endfor %}
+{% endblock %}
