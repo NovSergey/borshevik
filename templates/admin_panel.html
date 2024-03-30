@@ -10,8 +10,8 @@
         var map;
         ymaps.ready(function () {
             map = new ymaps.Map('map', {
-                center: [55.756377,37.618008],
-                zoom: 5,
+                center: [54.782635, 32.045287],
+                zoom: 13,
                 controls: [
                 'zoomControl', // Ползунок масштаба
                 'typeSelector' // Переключатель слоев карты
@@ -21,63 +21,58 @@
         function show(item){
             map.geoObjects.removeAll();
             let myPolygons;
-            if (item[1] == 0){
-                var coords = [item[0][0]];
-                if(item[0].length == 2){
-                  coords.push(item[0][1]);
-                };
-                map.setCenter(item[0][0][0]);
-                myPolygons = new ymaps.GeoObject({
-                    geometry: {
-                        type: "Polygon",
-                        coordinates: coords
-                    }
-                }, {
-                        fillColor: '#FF0000', //цвет
-                        opacity: 0.5, //прозрачность
-                        stroke: false //обводка(нету)
-                    });
-                map.geoObjects.add(myPolygons);
-                let min = coords[0][0][0];
-                let max = coords[0][0][0];
-                for(var i in coords[0]){
-                    if(coords[0][i][0] < min){
-                        min = coords[0][i][0];
-                    }
-                    else if(coords[0][i][0] > max){
-                        max = coords[0][i][0];
-                    }
-                };
-                console.log(min, max)
-                let zoom = 1/(max-min);
-                map.setZoom(zoom);
-                console.log(zoom);
+            var coords = [item[0][0]];
+            if(item[0].length == 2){
+              coords.push(item[0][1]);
             };
+            map.setCenter(item[0][0][0]);
+            myPolygons = new ymaps.GeoObject({
+                geometry: {
+                    type: "Polygon",
+                    coordinates: coords
+                }
+            }, {
+                    fillColor: '#FF0000', //цвет
+                    opacity: 0.5, //прозрачность
+                    stroke: false //обводка(нету)
+                });
+            map.geoObjects.add(myPolygons);
+            map.setZoom(10);
         };
+      function updateContent() {
+        $.getJSON('/get_coords_hid', function(data){
+          var result = data.coords;
+          document.getElementById("buttons").innerHTML = "";
+          for(item in result){
+            console.log(result[item])
+              const div = document.createElement('div');
+              div.className = 'item';
+              div.innerHTML = `
+                <div class="col-md6 border rounded" style="margin-top:10px; display: flex; justify-content: center;">
+                  <div style="display: inline-flex; margin: 5px;">
+                    <input id="bt" type="button" value="Посмотреть" onclick="show(`+JSON.stringify([result[item][0]])+`)" class="btn btn-info" style="margin-right: 5%;">
+                    <a href="/pol_add/${result[item][1]}" class="btn btn-success m_el" style="margin-right: 5%;">
+                      Добавить
+                    </a>
+                    <a href="/pol_remove/${result[item][1]}" class="btn btn-danger m_el" style="margin-right: 5%;">
+                      Удалить
+                    </a>
+                  </div>
+                </div>
+              `;
+              document.getElementById('buttons').appendChild(div);
+          }
+        })
+      }
+    updateContent();
+    setInterval('updateContent()', 1000*15);
 </script>
 {% endblock %}
 {% block content %}
 <h1>Новые точки</h1>
 <div id="map"></div>
+<div id="buttons"></div>
+<script>
 
-{% for item in coords%}
-  {% if item[1] == 0 %}
-    <div class="col-md6 border rounded">
-      <div style="display: inline-table;">
-<!--        <a href="#{{ url_for('static', filename=item[3]) }}">-->
-<!--          <img src="{{ url_for('static', filename=item[3]) }}" style="max-width: 300px; max-height: 200px">-->
-<!--        </a>-->
-        <a id="{{ url_for('static', filename=item[3]) }}" href="#" class="full" style="background-image:url({{ url_for('static', filename=item[3]) }})"></a>
-        <input id="bt" type="button" value="Посмотреть" onclick="show({{item}})">
-        <a href="/pol_add/{{ item[2] }}" class="btn btn-warning">
-          Добавить
-        </a>
-        <a href="/pol_remove/{{ item[2] }}" class="btn btn-danger">
-          Удалить
-        </a>
-      </div>
-    </div>
-
-  {% endif %}
-{% endfor %}
+</script>
 {% endblock %}

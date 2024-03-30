@@ -14,17 +14,17 @@ app = Flask(__name__, static_url_path='', static_folder='templates/static')
 login_manager = LoginManager()
 login_manager.init_app(app)
 
-#UPLOAD_PATH = '/var/www/u2162047/data/www/proborshevik67.ru/templates/static/'
+#UPLOAD_PATH = '/var/www/u2483731/data/www/proborshevik67.ru/templates/static/'
 UPLOAD_PATH = 'templates/static/'
 map_api = "ef7b9ab9-d96b-45b2-aab6-51fdb0d80171"
-app.config['SECRET_KEY'] = "fsdfsdfsdfsdfsdfs"
+app.config['SECRET_KEY'] = "borsheviktopsmol"
 
+
+#@app.route("/")
+#def index():
+#    return render_template("index.html", title='proborshevik67.ru')
 
 @app.route("/")
-def index():
-    return render_template("index.html", title='proborshevik67.ru')
-
-@app.route("/history")
 def history():
     return render_template("history.html", title='История')
 
@@ -48,11 +48,14 @@ def pmp():
 def sources():
     return render_template("sources.html", title='Источники')
     
+@app.route("/fight")
+def fight():
+    return render_template("fight.html", title='Источники')
+
+    
 @app.route("/map")
 def map():
-    db_sess = db_session.create_session()
-    pols = db_sess.query(Polygons)
-    return render_template("map.html", title="Карта", coords=ret_coords(pols), api=map_api)
+    return render_template("map.html", title="Карта", api=map_api)
 
 def ret_coords(pols):
     coords = []
@@ -80,8 +83,7 @@ def add_polygon():
                 db_sess.add(polygon)
                 db_sess.commit()
             return redirect("/map")
-        pols = db_sess.query(Polygons)
-        return render_template("add.html", title='Добавление точки', form=form, coords=ret_coords(pols), api=map_api)
+        return render_template("add.html", title='Добавление точки', form=form, api=map_api)
     else:
         return redirect("/map")
 
@@ -128,17 +130,29 @@ def login():
         return render_template('login.html', title='Авторизация', form=form)
     else:
         return redirect("/")
+        
+def get_coords(flag):
+    db_sess = db_session.create_session()
+    pols = db_sess.query(Polygons)
+    coords = []
+    for coord in pols:
+        if flag == coord.status:
+            coords.append([[[[float(j) for j in i.split(",")] for i in k.split(";")] for k in coord.coords.split('/')], coord.id])
+    return dict(coords=coords)
+
+@app.route('/get_coords_vis')
+def get_coords_vis():
+    return get_coords(True)
+
+@app.route('/get_coords_hid')
+def get_coords_hid():
+    return get_coords(False)
 
 @app.route('/admin_panel', methods=['GET', 'POST'])
 @login_required
 def admin_panel():
     if current_user.status == "admin" or not current_user.is_authenticated:
-        db_sess = db_session.create_session()
-        pols = db_sess.query(Polygons)
-        coords = []
-        for coord in pols:
-            coords.append([[[[float(j) for j in i.split(",")] for i in k.split(";")] for k in coord.coords.split('/')], coord.status, coord.id, coord.picture])
-        return render_template('admin_panel.html', title='proborshevik67.info', coords=coords, api=map_api)
+        return render_template('admin_panel.html', title='proborshevik67.info', api=map_api)
     else:
         return redirect("/")
 
@@ -195,10 +209,10 @@ def load_user(user_id):
     return db_sess.get(User, user_id)
 
 def main():
-    #db_session.global_init(user='u2212130_borshev', password='Koshka+12*', host='127.0.0.1',database='u2212130_borshevik')
+    #db_session.global_init(user='u2483731_borshev', password='Koshka+12*', host='127.0.0.1',database='u2483731_borshevik')
     db_session.global_init_sql("db/data.db")
 
 if __name__ == "__main__":
     main()
-    app.run(host='127.0.0.1', port=5565)
+    app.run(host='0.0.0.0', debug=True)
     

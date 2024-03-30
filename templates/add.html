@@ -7,6 +7,43 @@
         var objectManager;
         var myPolygon;
         var coord = [];
+
+        var all_coords=[];
+        var all_coords_obj = [];
+        function updateContent() {
+            $.getJSON('/get_coords_vis', function(data){
+                var result = data.coords;
+                let myPolygon;
+                let temp = [];
+                let temp_obj = [];
+                for(item in result){
+                    var coord = [result[item][0][0]];
+                    if(result[item][0].length == 2){
+                      coord.push(result[item][0][1]);
+                    };
+                    myPolygon = new ymaps.GeoObject({
+                        geometry: {
+                            type: "Polygon",
+                            coordinates: coord
+                        }
+                    }, {
+                            fillColor: '#FF0000', //цвет
+                            opacity: 0.5, //прозрачность
+                            stroke: false //обводка(нету)
+                    });
+                    temp.push(coord);
+                    temp_obj.push(myPolygon);
+                    map.geoObjects.add(myPolygon);
+                }
+                if(all_coords.length>0){
+                    for(item in all_coords_obj){
+                        map.geoObjects.remove(all_coords_obj[item]);
+                    }
+                }
+                all_coords = temp;
+                all_coords_obj = temp_obj;
+            })
+        }
         ymaps.ready(function(){
             map = new ymaps.Map('map', {
                 center: [54.782635, 32.045287],
@@ -18,22 +55,7 @@
                 'geolocationControl'
                 ]
             });
-            let myPolygons;
-            {% for item in coords %}
-                {% if item[1] == 1 %}
-                    myPolygons = new ymaps.GeoObject({
-                        geometry: {
-                            type: "Polygon",
-                            coordinates: [{{item[0][0]}}, {{item[0][1]}}]
-                        }
-                    }, {
-                            fillColor: '#FF0000', //цвет
-                            opacity: 0.5, //прозрачность
-                            stroke: false //обводка(нету)
-                        });
-                    map.geoObjects.add(myPolygons);
-                {% endif %}
-            {% endfor %}
+            updateContent();
             document.getElementById("btnStartDraw").addEventListener('click', createPolygon, false);
 
             function createPolygon() {
@@ -91,6 +113,7 @@
         document.getElementById('bt').onclick = function(){
             document.getElementById('coord').value = findMarks();
         };
+        setInterval('updateContent()', 1000*15);
       </script>
 {% endblock %}
 {% block content %}
@@ -105,10 +128,6 @@
             <h6>Чтобы добавить внутренний контур нажмите на последнюю точку -> "Добавить внутренний контур"</h6>
             <h6>Чтобы закончить рисовать нажмите на последнюю точку -> "Завершить"</h6>
             <input type="button" id="btnStartDraw" value="Начать рисовать" style="margin-bottom: 5px;">
-<!--            <p>-->
-<!--                {{ form.file.label(class="form-label") }}<br>-->
-<!--                {{ form.file(class="form-control-control") }}<br>-->
-<!--            </p>-->
             <p>{{ form.submit(type="submit",id="bt", class="btn btn-primary") }}</p>
              {{message}}
             <p style="height:0; width:0;">

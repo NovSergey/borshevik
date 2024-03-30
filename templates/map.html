@@ -7,9 +7,48 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/map.css') }}">
     <title>{{title}}</title>
     <script src="https://api-maps.yandex.ru/2.1/?apikey={{api}}&lang=ru_RU"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <script>
+
+        let map;
+        var all_coords=[];
+        var all_coords_obj = [];
+        function updateContent() {
+            $.getJSON('/get_coords_vis', function(data){
+                var result = data.coords;
+                let myPolygon;
+                let temp = [];
+                let temp_obj = [];
+                for(item in result){
+                    var coord = [result[item][0][0]];
+                    if(result[item][0].length == 2){
+                      coord.push(result[item][0][1]);
+                    };
+                    myPolygon = new ymaps.GeoObject({
+                        geometry: {
+                            type: "Polygon",
+                            coordinates: coord
+                        }
+                    }, {
+                            fillColor: '#FF0000', //цвет
+                            opacity: 0.5, //прозрачность
+                            stroke: false //обводка(нету)
+                    });
+                    temp.push(coord);
+                    temp_obj.push(myPolygon);
+                    map.geoObjects.add(myPolygon);
+                }
+                if(all_coords.length>0){
+                    for(item in all_coords_obj){
+                        map.geoObjects.remove(all_coords_obj[item]);
+                    }
+                }
+                all_coords = temp;
+                all_coords_obj = temp_obj;
+            })
+        }
         ymaps.ready(function () {
-            const map = new ymaps.Map('map', {
+            map = new ymaps.Map('map', {
                 center: [54.782635, 32.045287],
                 zoom: 10,
                 controls: [
@@ -17,25 +56,10 @@
                 'typeSelector' // Переключатель слоев карты
                 ]
             });
-            let myPolygon;
-            {% for item in coords %}
-                {% if item[1] == 1 %}
-                    myPolygon = new ymaps.GeoObject({
-                        geometry: {
-                            type: "Polygon",
-                            coordinates: [{{item[0][0]}}, {{item[0][1]}}]
-                        }
-                    }, {
-                            fillColor: '#FF0000', //цвет
-                            opacity: 0.5, //прозрачность
-                            stroke: false //обводка(нету)
-                        });
-                    map.geoObjects.add(myPolygon);
-                    console.log({{item}});
-                {% endif %}
-            {% endfor %}
+            updateContent();
         });
-      </script>
+       setInterval('updateContent()', 1000*15);
+    </script>
 </head>
 <body>
 <div class="topheader">
